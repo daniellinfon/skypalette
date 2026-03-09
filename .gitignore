@@ -1,0 +1,19 @@
+# Entornos virtuales y caché de Python
+backend/venv/
+backend/__pycache__/
+.pytest_cache/
+
+# Archivos pesados de Inteligencia Artificial y Datos
+*.pth
+*.pt
+*.onnx
+dataset/
+*.zip
+*.jfif
+*.jpg
+*.png
+temp_*/
+
+# Archivos de configuración de sistema operativo
+.DS_Store
+Thumbs.db

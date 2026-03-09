@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+geoalchemy2
+python-dotenv
+pillow
+opencv-python-headless
+colorthief
+python-multipart
+torch
+torchvision
+numpy

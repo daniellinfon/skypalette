@@ -1,0 +1,17 @@
+services:
+  db:
+    # Usamos PostGIS: un PostgreSQL con superpoderes para mapas y coordenadas
+    image: postgis/postgis:15-3.3
+    container_name: skypalette_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: superpassword
+      POSTGRES_DB: skypalette
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
