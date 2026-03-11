@@ -42,7 +42,7 @@ async def analyze_sunset(file: UploadFile = File(...)):
     ai_score = predict_ai_score(image)
     colors = analyze_colors(image)
     color_score = compute_color_score(colors)
-    final_score = round((ai_score * 0.65) + (color_score * 0.35), 1)
+    final_score = round((ai_score * 0.55) + (color_score * 0.45), 1)
     label = get_label(final_score)
 
     buffer = io.BytesIO()
@@ -59,10 +59,6 @@ async def analyze_sunset(file: UploadFile = File(...)):
         # Le decimos al frontend que no hay GPS para forzar el modo manual por ahora
         "has_gps": False 
     }
-
-# ==========================================
-# 💾 NUEVOS ENDPOINTS DE BASE DE DATOS
-# ==========================================
 
 @app.post("/save")
 def save_sunset(sunset: schemas.AtardecerCreate, db: Session = Depends(get_db)):
@@ -83,10 +79,22 @@ def save_sunset(sunset: schemas.AtardecerCreate, db: Session = Depends(get_db)):
     return {"message": "Atardecer guardado con éxito", "id": db_sunset.id}
 
 @app.get("/sunsets")
-def get_all_sunsets(db: Session = Depends(get_db)):
-    # Pedimos todos los atardeceres a la base de datos
-    sunsets = db.query(models.Atardecer).all()
-    return sunsets
+def get_sunsets(db: Session = Depends(get_db)):
+    sunsets = db.query(Atardecer).order_by(Atardecer.id.desc()).all()
+    return [
+        {
+            "id":           s.id,
+            "filename":     s.filename if hasattr(s, 'filename') else '',
+            "final_score":  s.final_score,
+            "label":        s.label,
+            "latitude":     s.latitude,
+            "longitude":    s.longitude,
+            "location_name":s.location_name,
+            "image_base64": s.image_base64,
+            "is_favorite":  s.is_favorite or False,
+        }
+        for s in sunsets if s.latitude and s.longitude
+    ]
 
 @app.get("/stats")
 def get_stats(db: Session = Depends(get_db)):
@@ -125,3 +133,12 @@ def delete_sunset(sunset_id: int, db: Session = Depends(get_db)):
     db.delete(atardecer)
     db.commit()
     return {"message": "✅ Eliminado"}
+
+@app.patch("/sunsets/{sunset_id}/favorite")
+def toggle_favorite(sunset_id: int, db: Session = Depends(get_db)):
+    atardecer = db.query(Atardecer).filter(Atardecer.id == sunset_id).first()
+    if not atardecer:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    atardecer.is_favorite = not atardecer.is_favorite
+    db.commit()
+    return {"id": atardecer.id, "is_favorite": atardecer.is_favorite}

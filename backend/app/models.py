@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from app.database import Base 
 
 class Atardecer(Base):
@@ -12,5 +12,5 @@ class Atardecer(Base):
     final_score = Column(Float)
     label = Column(String)
     
-    # Guardamos el base64 larguísimo para que el mapa pueda pintar la miniatura
     image_base64 = Column(String)
+    is_favorite   = Column(Boolean, default=False)

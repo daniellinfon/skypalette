@@ -24,16 +24,14 @@ function App() {
     setMobileTab('map');
   };
 
-  const handleSunsetDeleted = (id) => {
-    setSunsets(prev => prev.filter(s => s.id !== id));
-  };
-
   const handlePickedCoords = (coords) => {
     setPickedCoords(coords);
-    if (coords && window.innerWidth <= 768) {
-      setMobileTab('panel');
-    }
+    if (coords && window.innerWidth <= 768) setMobileTab('panel');
   };
+
+  // Callbacks para el mapa (que no recibe setSunsets directamente)
+  const handleDelete          = (id)           => setSunsets(prev => prev.filter(s => s.id !== id));
+  const handleFavoriteToggle  = (id, isFav)    => setSunsets(prev => prev.map(s => s.id === id ? { ...s, is_favorite: isFav } : s));
 
   return (
     <div className="app">
@@ -44,12 +42,9 @@ function App() {
           <button
             onClick={() => setShowCollection(true)}
             style={{
-              background: 'linear-gradient(135deg, #ff6b2b, #ff3d6e)',
-              border: 'none', borderRadius: '8px', color: '#fff',
-              borderRadius: '8px', color: '#f0ece6',
-              padding: '7px 14px', fontSize: '0.85rem',
-              cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'linear-gradient(135deg, #ff6b2b, #ff3d6e)', border: 'none',
+              borderRadius: '8px', color: '#f0ece6', padding: '7px 14px', fontSize: '0.85rem',
+              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px',
               transition: 'background 0.2s',
             }}
             
@@ -60,10 +55,9 @@ function App() {
           <button
             onClick={() => setShowRanking(true)}
             style={{
-              background: 'linear-gradient(135deg, #ff6b2b, #ff3d6e)',
-              border: 'none', borderRadius: '8px', color: '#fff',
-              padding: '7px 14px', fontSize: '0.85rem', fontWeight: 500,
-              cursor: 'pointer', fontFamily: 'inherit',
+              background: 'linear-gradient(135deg, #ff6b2b, #ff3d6e)', border: 'none',
+              borderRadius: '8px', color: '#fff', padding: '7px 14px', fontSize: '0.85rem',
+              fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}
           >
@@ -86,40 +80,39 @@ function App() {
           setPickedCoords={handlePickedCoords}
           sunsets={sunsets}
           mobileTab={mobileTab}
+          onDelete={handleDelete}
+          onFavoriteToggle={handleFavoriteToggle}
         />
       </div>
 
       <nav className="mobile-tabs">
         <button className={`mobile-tab ${mobileTab === 'panel' ? 'active' : ''}`} onClick={() => setMobileTab('panel')}>
-          <span className="tab-icon">📤</span>
-          Subir
+          <span className="tab-icon">📤</span>Subir
         </button>
         <button className={`mobile-tab ${mobileTab === 'map' ? 'active' : ''}`} onClick={() => setMobileTab('map')}>
-          <span className="tab-icon">🗺️</span>
-          Mapa
+          <span className="tab-icon">🗺️</span>Mapa
         </button>
         <button className="mobile-tab" onClick={() => setShowCollection(true)}>
-          <span className="tab-icon">🖼️</span>
-          Fotos
+          <span className="tab-icon">🖼️</span>Fotos
         </button>
         <button className="mobile-tab" onClick={() => setShowRanking(true)}>
-          <span className="tab-icon">🏆</span>
-          Ranking
+          <span className="tab-icon">🏆</span>Ranking
         </button>
       </nav>
 
       {showRanking && (
         <RankingModal
+          sunsets={sunsets}
+          setSunsets={setSunsets}
           onClose={() => setShowRanking(false)}
-          onDelete={handleSunsetDeleted}
         />
       )}
 
       {showCollection && (
         <CollectionPanel
           sunsets={sunsets}
+          setSunsets={setSunsets}
           onClose={() => setShowCollection(false)}
-          onDelete={handleSunsetDeleted}
         />
       )}
     </div>

@@ -308,7 +308,7 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
                   <ColorChip label="Saturación" value={data.color_detail.sat_score} />
                   <ColorChip label="Calidez"    value={data.color_detail.warm_score} />
                   <ColorChip label="Diversidad" value={data.color_detail.diversity_score} />
-                  {/*<ColorChip label="Horizonte"  value={data.color_detail.horizon_score} />*/}
+                  <ColorChip label="Horizonte"  value={data.color_detail.horizon_score} />
                 </div>
               )}
 

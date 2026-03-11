@@ -1,6 +1,5 @@
 services:
   db:
-    # Usamos PostGIS: un PostgreSQL con superpoderes para mapas y coordenadas
     image: postgis/postgis:15-3.3
     container_name: skypalette_db
     restart: always
