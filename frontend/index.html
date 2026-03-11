@@ -1,101 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyPalette</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<div class="app">
-
-  <header>
-    <div class="logo">SkyPalette</div>
-    <div class="tagline">Sunset Intelligence</div>
-  </header>
-
-  <!-- ── PANEL ── -->
-  <div class="panel">
-
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept="image/*" />
-      <span class="drop-icon">🌅</span>
-      <div class="drop-title">Sube tu atardecer</div>
-      <div class="drop-sub">JPG, PNG · arrastra o haz click</div>
-    </div>
-
-    <div class="preview-wrap" id="previewWrap">
-      <img id="previewImg" src="" alt="preview" />
-    </div>
-
-    <div class="error-msg" id="errorMsg"></div>
-
-    <button class="btn" id="analyzeBtn" onclick="analyze()">
-      Analizar atardecer →
-    </button>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      Analizando imagen...
-    </div>
-
-    <div class="scores-wrap" id="scoresWrap">
-
-      <div class="score-main">
-        <div>
-          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Score Final</div>
-          <div class="score-big" id="scoreBig">—</div>
-        </div>
-        <div id="scoreLabel" style="font-size:1rem;font-weight:500">—</div>
-      </div>
-
-      <div class="scores-grid">
-        <div class="score-card">
-          <div class="score-card-label">Score IA</div>
-          <div class="score-card-value" id="aiScore">—</div>
-          <div class="bar"><div class="bar-fill" id="aiBar" style="width:0%"></div></div>
-        </div>
-        <div class="score-card">
-          <div class="score-card-label">Score Color</div>
-          <div class="score-card-value" id="colorScore">—</div>
-          <div class="bar"><div class="bar-fill" id="colorBar" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <!-- Ubicación -->
-      <div class="location-section">
-        <div class="location-title">📍 Ubicación</div>
-
-        <div class="gps-found" id="gpsFound">
-          <span>✅</span>
-          <span id="gpsCoords">GPS extraído automáticamente</span>
-        </div>
-
-        <div class="gps-manual" id="gpsManual">
-          <p>Esta foto no tiene GPS. Haz click en el mapa para indicar dónde fue tomada.</p>
-          <button class="btn" id="pickBtn" style="display:block" onclick="startPicking()">
-            🗺️ Seleccionar en el mapa
-          </button>
-          <div class="pick-hint" id="pickHint">👆 Haz click en el mapa...</div>
-          <div class="coords-display" id="coordsDisplay">📍 —</div>
-          <input type="text" id="locationName" placeholder="Nombre del lugar (ej: Ibiza, España)" />
-        </div>
-      </div>
-
-      <button class="btn" id="saveBtn" onclick="save()" style="display:none">
-        Guardar en el mapa 💾
-      </button>
-
-    </div>
-  </div>
-
-  <!-- ── MAP ── -->
-  <div id="map"></div>
-
-</div>
-<script src="app.js"></script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sunset Memories</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

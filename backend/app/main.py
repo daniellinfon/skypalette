@@ -11,6 +11,7 @@ from app.ml.color_analyzer import analyze_colors, compute_color_score, get_label
 
 # Módulos de Base de Datos (CORREGIDO)
 from app.database import engine, Base, get_db
+from app.models import Atardecer
 from app import models
 from app import schemas
 
@@ -86,3 +87,41 @@ def get_all_sunsets(db: Session = Depends(get_db)):
     # Pedimos todos los atardeceres a la base de datos
     sunsets = db.query(models.Atardecer).all()
     return sunsets
+
+@app.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+    atardeceres = db.query(Atardecer).order_by(Atardecer.final_score.desc()).all()
+
+    if not atardeceres:
+        return {"total": 0, "avg_score": 0, "best": None, "worst": None, "ranking": []}
+
+    scores = [a.final_score for a in atardeceres]
+
+    ranking = [
+        {
+            "id":           a.id,
+            "final_score":  a.final_score,
+            "label":        a.label,
+            "location_name":a.location_name,
+            "image_base64": a.image_base64,
+        }
+        for a in atardeceres[:10]
+    ]
+
+    return {
+        "total":     len(atardeceres),
+        "avg_score": round(sum(scores) / len(scores), 1),
+        "best":      max(scores),
+        "worst":     min(scores),
+        "ranking":   ranking,
+    }
+
+
+@app.delete("/sunsets/{sunset_id}")
+def delete_sunset(sunset_id: int, db: Session = Depends(get_db)):
+    atardecer = db.query(Atardecer).filter(Atardecer.id == sunset_id).first()
+    if not atardecer:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    db.delete(atardecer)
+    db.commit()
+    return {"message": "✅ Eliminado"}
