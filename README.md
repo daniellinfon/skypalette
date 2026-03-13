@@ -141,7 +141,9 @@ El modelo está basado en **ResNet18** con Transfer Learning:
 - **Dataset**: imágenes de atardeceres clasificadas manualmente
 - **Entrenamiento**: 20 épocas en GPU T4
 - **Mejor validación**: 94.4% accuracy (época 15)
-- **Score final**: `(Score IA × 0.65) + (Score Color × 0.35)`
+- **Score final**: `(Score IA × 0.55) + (Score Color × 0.45)`
+
+En atardecer.ipynb esta el entrenamiento del modelo
 
 ### Criterios del análisis de color
 
