@@ -175,8 +175,14 @@ services:
 ---
 
 ## 📱 Capturas de pantalla
-
-![Panel de análisis](screenshots/panel.png)
+ **🗺️ Mapa** 
 ![Mapa con clusters](screenshots/mapa.png)
+
+**🎨 Panel de análisis** 
+![Panel de análisis](screenshots/panel.png)
+
+**🖼️ Colección** 
 ![Colección](screenshots/coleccion.png)
+
+**🏆 Ranking** 
 ![Ranking](screenshots/ranking.png)
