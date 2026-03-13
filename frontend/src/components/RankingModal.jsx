@@ -1,3 +1,16 @@
+/**
+ * RankingModal.jsx
+ * ----------------
+ * Modal con el top 10 de atardeceres y estadísticas globales.
+ * Calcula todo desde el prop `sunsets` (sin fetch propio)
+ * para mantenerse sincronizado con el estado global de App.
+ *
+ * Props:
+ *   sunsets    — lista de atardeceres del estado global de App
+ *   setSunsets — setter directo para sincronizar borrados y favoritos
+ *   onClose    — callback para cerrar el modal
+ */
+
 import React, { useState } from 'react';
 import Lightbox from './Lightbox';
 import { deleteSunset, toggleFavorite } from '../api';
@@ -5,12 +18,15 @@ import { deleteSunset, toggleFavorite } from '../api';
 export default function RankingModal({ sunsets, setSunsets, onClose }) {
   const [lightbox, setLightbox] = useState(null);
 
-  // Calcular stats desde el estado global
+  // ── Cálculo de estadísticas desde el estado global ───────────────────────
   const total     = sunsets.length;
   const avgScore  = total > 0 ? (sunsets.reduce((a, s) => a + s.final_score, 0) / total).toFixed(1) : 0;
   const bestScore = total > 0 ? Math.max(...sunsets.map(s => s.final_score)) : 0;
-  const ranking   = [...sunsets].sort((a, b) => b.final_score - a.final_score).slice(0, 10);
 
+  // Top 10 ordenado por score descendente
+  const ranking = [...sunsets].sort((a, b) => b.final_score - a.final_score).slice(0, 10);
+
+  /** Elimina un atardecer de la BD y lo quita del estado global. */
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar este atardecer?')) return;
     try {
@@ -21,6 +37,7 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
     }
   };
 
+  /** Alterna el favorito y actualiza el estado global. */
   const handleFavorite = async (id) => {
     try {
       const res = await toggleFavorite(id);
@@ -30,22 +47,26 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
     }
   };
 
+  /** Cierra el modal al hacer click en el backdrop (fuera del contenido). */
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
   return (
     <>
+      {/* Backdrop semitransparente con blur */}
       <div onClick={handleBackdrop} style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
         zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '20px', backdropFilter: 'blur(4px)',
       }}>
+        {/* Contenedor del modal */}
         <div style={{
           background: '#13131a', border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '20px', width: '100%', maxWidth: '620px',
           maxHeight: '85vh', overflowY: 'auto',
           boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
         }}>
-          {/* Header */}
+
+          {/* ── Header sticky ── */}
           <div style={{
             padding: '24px 28px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -66,6 +87,7 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
           </div>
 
           <div style={{ padding: '24px 28px' }}>
+            {/* Estado vacío */}
             {total === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(240,236,230,0.45)' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🌅</div>
@@ -73,7 +95,7 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
               </div>
             ) : (
               <>
-                {/* Stats */}
+                {/* ── Tarjetas de estadísticas ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '28px' }}>
                   <StatCard label="Total fotos" value={total}     icon="📸" />
                   <StatCard label="Media score" value={avgScore}  icon="📊" />
@@ -84,6 +106,7 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
                   Top 10 Atardeceres
                 </h3>
 
+                {/* ── Lista del ranking ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {ranking.map((sunset, index) => (
                     <RankingRow
@@ -102,6 +125,7 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
         </div>
       </div>
 
+      {/* Lightbox — visor a pantalla completa al hacer click en una foto */}
       {lightbox && (
         <Lightbox
           image={lightbox.image} title={lightbox.title}
@@ -113,6 +137,10 @@ export default function RankingModal({ sunsets, setSunsets, onClose }) {
   );
 }
 
+/**
+ * StatCard — tarjeta de estadística individual con icono, valor y etiqueta.
+ * Se usa para Total fotos, Media score y Mejor score.
+ */
 function StatCard({ label, value, icon }) {
   return (
     <div style={{ background: '#0a0a0f', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
@@ -127,7 +155,13 @@ function StatCard({ label, value, icon }) {
   );
 }
 
+/**
+ * RankingRow — fila de una posición del ranking.
+ * Muestra medalla, miniatura clickable, score, ubicación,
+ * botón favorito y botón eliminar.
+ */
 function RankingRow({ sunset, position, onDelete, onFavorite, onPhotoClick }) {
+  // Medallas para el podio, número para el resto
   const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
   const medal  = medals[position] || `#${position}`;
 
@@ -140,8 +174,10 @@ function RankingRow({ sunset, position, onDelete, onFavorite, onPhotoClick }) {
       onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,107,43,0.3)'}
       onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}
     >
+      {/* Posición / medalla */}
       <div style={{ fontSize: '1.2rem', minWidth: '28px', textAlign: 'center' }}>{medal}</div>
 
+      {/* Miniatura — click abre el Lightbox */}
       <img
         src={sunset.image_base64?.startsWith('data:image') ? sunset.image_base64 : `data:image/jpeg;base64,${sunset.image_base64}`}
         alt=""
@@ -152,6 +188,7 @@ function RankingRow({ sunset, position, onDelete, onFavorite, onPhotoClick }) {
         onError={(e) => { e.target.style.display = 'none'; }}
       />
 
+      {/* Score, ubicación y label */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', background: 'linear-gradient(135deg, #ffb347, #ff6b2b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
           {sunset.final_score}
@@ -164,6 +201,7 @@ function RankingRow({ sunset, position, onDelete, onFavorite, onPhotoClick }) {
         </div>
       </div>
 
+      {/* Botones favorito y eliminar */}
       <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
         <button onClick={() => onFavorite(sunset.id)} title={sunset.is_favorite ? 'Quitar favorito' : 'Añadir favorito'} style={{
           background: sunset.is_favorite ? 'rgba(255,179,71,0.2)' : 'rgba(255,179,71,0.06)',

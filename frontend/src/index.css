@@ -1,5 +1,19 @@
+/*
+ * index.css
+ * ---------
+ * Estilos globales de la aplicación.
+ *
+ * IMPORTANTE: el @import de leaflet DEBE ser la primera línea.
+ * Sin él, el mapa de Leaflet no tiene estilos y no se renderiza.
+ *
+ * Layout desktop: CSS Grid con columna izquierda fija (420px) + mapa flexible.
+ * Layout móvil: una sola columna, panel y mapa se alternan con .mobile-active.
+ */
+
+/* ── Leaflet — OBLIGATORIO para que el mapa funcione ─────────────────────── */
 @import "leaflet/dist/leaflet.css";
 
+/* ── Reset básico ────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -8,19 +22,21 @@
     padding: 0;
 }
 
+/* ── Variables CSS ───────────────────────────────────────────────────────── */
 :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --border: rgba(255, 255, 255, 0.07);
-    --orange: #ff6b2b;
-    --rose: #ff3d6e;
-    --gold: #ffb347;
-    --text: #f0ece6;
-    --muted: rgba(240, 236, 230, 0.45);
-    --tab-height: 64px;
-    --header-height: 65px;
+    --bg:            #0a0a0f;   /* Fondo principal */
+    --surface:       #13131a;   /* Fondo de paneles y modales */
+    --border:        rgba(255, 255, 255, 0.07);
+    --orange:        #ff6b2b;   /* Acento principal */
+    --rose:          #ff3d6e;   /* Acento secundario */
+    --gold:          #ffb347;   /* Scores y favoritos */
+    --text:          #f0ece6;   /* Texto principal */
+    --muted:         rgba(240, 236, 230, 0.45); /* Texto secundario */
+    --tab-height:    64px;      /* Altura de la barra de tabs móvil */
+    --header-height: 65px;      /* Altura del header */
 }
 
+/* ── Body ────────────────────────────────────────────────────────────────── */
 body {
     background: var(--bg);
     color: var(--text);
@@ -29,6 +45,7 @@ body {
     overflow-x: hidden;
 }
 
+/* Resplandor ambiental naranja en la parte superior — efecto decorativo */
 body::before {
     content: '';
     position: fixed;
@@ -42,7 +59,8 @@ body::before {
     z-index: 0;
 }
 
-/* ── LAYOUT DESKTOP ── */
+/* ── Layout desktop: Grid 2 columnas ─────────────────────────────────────── */
+/* Columna izquierda fija (420px) + mapa ocupa el resto */
 .app {
     display: grid;
     grid-template-columns: 420px 1fr;
@@ -50,6 +68,8 @@ body::before {
     min-height: 100vh;
 }
 
+/* ── Header ──────────────────────────────────────────────────────────────── */
+/* Ocupa toda la anchura del grid (columnas 1 a -1) */
 header {
     grid-column: 1 / -1;
     display: flex;
@@ -61,6 +81,7 @@ header {
     z-index: 10;
 }
 
+/* Logo con degradado tricolor */
 .logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.7rem;
@@ -78,7 +99,7 @@ header {
     text-transform: uppercase;
 }
 
-/* ── PANEL WRAPPER ── */
+/* ── Panel wrapper (columna izquierda) ───────────────────────────────────── */
 .panel-wrapper {
     background: var(--surface);
     border-right: 1px solid var(--border);
@@ -88,12 +109,12 @@ header {
     z-index: 5;
 }
 
-/* ── MAP WRAPPER ── */
+/* ── Map wrapper (columna derecha) ───────────────────────────────────────── */
 .map-wrapper {
     height: calc(100vh - var(--header-height));
 }
 
-/* ── LEFT PANEL INNER ── */
+/* ── Panel interior (Sidebar) ────────────────────────────────────────────── */
 .panel {
     height: 100%;
     display: flex;
@@ -101,6 +122,7 @@ header {
     overflow: hidden;
 }
 
+/* ── Drop zone ───────────────────────────────────────────────────────────── */
 .drop-zone {
     border: 1.5px dashed rgba(255, 107, 43, 0.35);
     border-radius: 14px;
@@ -118,23 +140,11 @@ header {
     background: rgba(255, 107, 43, 0.05);
 }
 
-.drop-icon {
-    font-size: 2rem;
-    margin-bottom: 8px;
-    display: block;
-}
+.drop-icon  { font-size: 2rem; margin-bottom: 8px; display: block; }
+.drop-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 4px; }
+.drop-sub   { font-size: 0.78rem; color: var(--muted); }
 
-.drop-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    margin-bottom: 4px;
-}
-
-.drop-sub {
-    font-size: 0.78rem;
-    color: var(--muted);
-}
-
+/* ── Botón genérico ──────────────────────────────────────────────────────── */
 .btn {
     width: 100%;
     padding: 13px;
@@ -149,10 +159,10 @@ header {
     transition: opacity 0.2s, transform 0.15s;
     margin-bottom: 12px;
 }
-
-.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn:hover    { opacity: 0.9; transform: translateY(-1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* ── Animaciones ─────────────────────────────────────────────────────────── */
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
@@ -162,6 +172,7 @@ header {
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Barra de progreso (scores) ──────────────────────────────────────────── */
 .bar {
     margin-top: 6px;
     height: 2px;
@@ -169,7 +180,6 @@ header {
     border-radius: 999px;
     overflow: hidden;
 }
-
 .bar-fill {
     height: 100%;
     border-radius: 999px;
@@ -177,7 +187,7 @@ header {
     transition: width 0.8s cubic-bezier(.16, 1, .3, 1);
 }
 
-/* ── MAP ── */
+/* ── Mapa Leaflet ────────────────────────────────────────────────────────── */
 .map-wrapper .leaflet-container {
     width: 100%;
     height: 100%;
@@ -189,22 +199,24 @@ header {
 }
 
 .leaflet-container {
-    background: #7a9aaa;
+    background: #7a9aaa; /* Color del océano mientras cargan los tiles */
     width: 100%;
     height: calc(100vh - var(--header-height));
 }
 
+/* Filtro oscuro + desaturado sobre los tiles del mapa — estética nocturna */
 .leaflet-tile {
     filter: brightness(0.65) saturate(0.7);
 }
 
+/* Botones de zoom con tema oscuro */
 .leaflet-control-zoom a {
     background: var(--surface) !important;
     color: var(--text) !important;
     border-color: var(--border) !important;
 }
 
-/* ── POPUP DARK THEME ── */
+/* ── Popup de Leaflet — tema oscuro ──────────────────────────────────────── */
 .leaflet-popup-content-wrapper {
     background: #13131a !important;
     border: 1px solid rgba(255,255,255,0.07) !important;
@@ -233,33 +245,34 @@ header {
     right: 8px !important;
     z-index: 10;
 }
-
 .leaflet-popup-close-button:hover { color: #fff !important; }
 
-/* ── MOBILE TABS BAR ── */
+/* ── Barra de tabs móvil — oculta en desktop ─────────────────────────────── */
 .mobile-tabs {
     display: none;
 }
 
-/* ── MOBILE ── */
+/* ── Media query móvil (≤ 768px) ─────────────────────────────────────────── */
 @media (max-width: 768px) {
 
     header {
         padding: 14px 20px;
     }
 
-    .logo { font-size: 1.3rem; }
+    .logo    { font-size: 1.3rem; }
     .tagline { display: none; }
 
+    /* Oculta el texto de los botones del header */
     .ranking-label { display: none; }
 
+    /* Grid pasa a una sola columna */
     .app {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
         min-height: 100dvh;
     }
 
-    /* Panel */
+    /* Panel oculto por defecto — visible solo con .mobile-active */
     .panel-wrapper {
         display: none;
         max-height: calc(100dvh - var(--header-height) - var(--tab-height));
@@ -267,26 +280,25 @@ header {
         border-bottom: 1px solid var(--border);
         overflow-y: auto;
     }
-
     .panel-wrapper.mobile-active {
         display: block;
     }
 
-    /* Mapa */
+    /* Mapa oculto por defecto — visible solo con .mobile-active */
     .map-wrapper {
         display: none;
         height: calc(100dvh - var(--header-height) - var(--tab-height));
     }
-
     .map-wrapper.mobile-active {
         display: block;
     }
 
+    /* En móvil Leaflet necesita altura explícita (no hereda bien del wrapper) */
     .leaflet-container {
         height: calc(100dvh - var(--header-height) - var(--tab-height)) !important;
     }
 
-    /* Tabs fijos abajo */
+    /* ── Barra de tabs fija en la parte inferior ── */
     .mobile-tabs {
         display: flex;
         position: fixed;
@@ -299,6 +311,7 @@ header {
         z-index: 1000;
     }
 
+    /* Botón individual de tab */
     .mobile-tab {
         flex: 1;
         display: flex;
@@ -323,10 +336,10 @@ header {
         line-height: 1;
     }
 
+    /* Tab activo resaltado con color naranja + glow */
     .mobile-tab.active {
         color: var(--orange);
     }
-
     .mobile-tab.active .tab-icon {
         filter: drop-shadow(0 0 6px rgba(255,107,43,0.6));
     }

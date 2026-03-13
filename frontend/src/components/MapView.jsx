@@ -1,3 +1,18 @@
+/**
+ * MapView.jsx
+ * -----------
+ * Mapa interactivo global con marcadores fotográficos y clustering.
+ * Usa Leaflet + react-leaflet + react-leaflet-cluster.
+ *
+ * Props:
+ *   pickedCoords     — coordenadas seleccionadas (muestra CircleMarker naranja)
+ *   setPickedCoords  — callback al hacer click en el mapa
+ *   sunsets          — lista de atardeceres guardados
+ *   mobileTab        — tab activo en móvil (para invalidateSize)
+ *   onDelete         — callback para eliminar un atardecer del estado global
+ *   onFavoriteToggle — callback para actualizar is_favorite en el estado global
+ */
+
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -5,6 +20,10 @@ import L from 'leaflet';
 import Lightbox from './Lightbox';
 import { deleteSunset, toggleFavorite } from '../api';
 
+/**
+ * MapClickHandler — componente invisible que captura clicks en el mapa
+ * y los convierte en coordenadas para el Sidebar.
+ */
 function MapClickHandler({ setPickedCoords }) {
   useMapEvents({
     click: (e) => setPickedCoords({ lat: e.latlng.lat, lng: e.latlng.lng }),
@@ -12,6 +31,11 @@ function MapClickHandler({ setPickedCoords }) {
   return null;
 }
 
+/**
+ * MapResizer — fuerza a Leaflet a recalcular el tamaño del mapa
+ * cuando se hace visible en móvil (tras estar en display:none).
+ * Sin esto los tiles no cargan al cambiar de tab.
+ */
 function MapResizer({ mobileTab }) {
   const map = useMap();
   useEffect(() => {
@@ -20,6 +44,11 @@ function MapResizer({ mobileTab }) {
   return null;
 }
 
+/**
+ * createPhotoIcon — genera un icono personalizado con la foto del atardecer
+ * en forma de pin (rombo rotado). Si es favorito, el borde es dorado y
+ * muestra una estrella en la esquina.
+ */
 function createPhotoIcon(imageBase64, isFavorite) {
   const imgSrc = imageBase64?.startsWith('data:image')
     ? imageBase64
@@ -51,6 +80,10 @@ function createPhotoIcon(imageBase64, isFavorite) {
   });
 }
 
+/**
+ * createClusterIcon — genera el icono para grupos de marcadores.
+ * Cambia de color y tamaño según el número de elementos agrupados.
+ */
 function createClusterIcon(cluster) {
   const count = cluster.getChildCount();
   let bg, size;
@@ -70,12 +103,18 @@ function createClusterIcon(cluster) {
   });
 }
 
+/**
+ * SunsetPopup — contenido del popup de Leaflet al hacer click en un pin.
+ * Gestiona su propio estado local de favorito y eliminado para
+ * dar feedback inmediato sin esperar a que App re-renderice.
+ */
 function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
-  const [deleting,    setDeleting]    = useState(false);
-  const [deleted,     setDeleted]     = useState(false);
-  const [favorite,    setFavorite]    = useState(sunset.is_favorite || false);
-  const [toggling,    setToggling]    = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleted,  setDeleted]  = useState(false);
+  const [favorite, setFavorite] = useState(sunset.is_favorite || false);
+  const [toggling, setToggling] = useState(false);
 
+  /** Elimina el atardecer y notifica a App para actualizar el estado global. */
   const handleDelete = async () => {
     if (!window.confirm('¿Eliminar este atardecer?')) return;
     setDeleting(true);
@@ -89,6 +128,7 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
     }
   };
 
+  /** Alterna favorito y sincroniza con el estado global de App. */
   const handleFavorite = async () => {
     setToggling(true);
     try {
@@ -102,6 +142,7 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
     }
   };
 
+  // Estado eliminado — muestra mensaje en lugar del popup normal
   if (deleted) return (
     <div style={{ padding: '16px', textAlign: 'center', color: '#666', fontFamily: 'sans-serif', fontSize: '0.85rem' }}>
       🗑️ Eliminado
@@ -110,6 +151,7 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
 
   return (
     <div style={{ overflow: 'hidden', fontFamily: 'sans-serif' }}>
+      {/* Foto clickable — abre el Lightbox */}
       <img
         src={sunset.image_base64?.startsWith('data:image') ? sunset.image_base64 : `data:image/jpeg;base64,${sunset.image_base64}`}
         alt="sunset"
@@ -135,7 +177,6 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
-            {/* Favorito */}
             <ActionBtn
               onClick={handleFavorite}
               disabled={toggling}
@@ -150,7 +191,6 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
             >
               {favorite ? '⭐' : '☆'}
             </ActionBtn>
-            {/* Eliminar */}
             <ActionBtn
               onClick={handleDelete}
               disabled={deleting}
@@ -171,6 +211,7 @@ function SunsetPopup({ sunset, onLightbox, onDelete, onFavoriteToggle }) {
   );
 }
 
+/** ActionBtn — botón de acción reutilizable con estilos activo/inactivo. */
 function ActionBtn({ onClick, disabled, active, activeColor, activeBorder, activeText, inactiveColor, inactiveBorder, inactiveText, title, children }) {
   return (
     <button
@@ -218,11 +259,11 @@ export default function MapView({ pickedCoords, setPickedCoords, sunsets, mobile
         <TileLayer
           attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          
         />
         <MapResizer mobileTab={mobileTab} />
         <MapClickHandler setPickedCoords={setPickedCoords} />
 
+        {/* Marcador naranja de la ubicación seleccionada (antes de guardar) */}
         {pickedCoords && (
           <CircleMarker
             center={[pickedCoords.lat, pickedCoords.lng]}
@@ -231,6 +272,7 @@ export default function MapView({ pickedCoords, setPickedCoords, sunsets, mobile
           />
         )}
 
+        {/* Cluster de marcadores fotográficos */}
         <MarkerClusterGroup
           iconCreateFunction={createClusterIcon}
           maxClusterRadius={60}
@@ -258,6 +300,7 @@ export default function MapView({ pickedCoords, setPickedCoords, sunsets, mobile
         </MarkerClusterGroup>
       </MapContainer>
 
+      {/* Lightbox — visor a pantalla completa al hacer click en una foto */}
       {lightbox && (
         <Lightbox
           image={lightbox.image}

@@ -1,3 +1,15 @@
+/**
+ * Sidebar.jsx
+ * -----------
+ * Panel lateral izquierdo. Es el componente central de interacción del usuario.
+ * Gestiona todo el flujo: subida de imagen → análisis IA → ubicación → guardado.
+ *
+ * Props:
+ *   pickedCoords    — coordenadas seleccionadas en el mapa { lat, lng }
+ *   setPickedCoords — actualiza las coordenadas en App (sincroniza mapa y panel)
+ *   onSunsetSaved   — callback que se llama tras guardar con éxito
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 
 const styles = `
@@ -53,22 +65,33 @@ const styles = `
 `;
 
 export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }) {
-  const [file, setFile]                   = useState(null);
-  const [preview, setPreview]             = useState(null);
-  const [loading, setLoading]             = useState(false);
-  const [data, setData]                   = useState(null);
-  const [error, setError]                 = useState(null);
-  const [locationTitle, setLocationTitle] = useState('');
-  const [latInput, setLatInput]           = useState('');
-  const [lngInput, setLngInput]           = useState('');
+  // Estado de la imagen seleccionada
+  const [file, setFile]       = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  // Estado del análisis
+  const [loading, setLoading] = useState(false);
+  const [data, setData]       = useState(null);
+  const [error, setError]     = useState(null);
+
+  // Estado del formulario de ubicación
+  const [locationTitle, setLocationTitle]   = useState('');
+  const [latInput, setLatInput]             = useState('');
+  const [lngInput, setLngInput]             = useState('');
   const [locationSearch, setLocationSearch] = useState('');
-  const [searching, setSearching]         = useState(false);
-  const [suggestions, setSuggestions]     = useState([]);
-  const [dragOver, setDragOver]           = useState(false);
+  const [searching, setSearching]           = useState(false);
+  const [suggestions, setSuggestions]       = useState([]);
+
+  // Estado del drag & drop
+  const [dragOver, setDragOver] = useState(false);
 
   const fileInputRef  = useRef(null);
   const searchTimeout = useRef(null);
 
+  /**
+   * Sincroniza los inputs de coordenadas cuando el usuario hace click en el mapa.
+   * Se dispara cada vez que pickedCoords cambia desde MapView.
+   */
   useEffect(() => {
     if (pickedCoords) {
       setLatInput(pickedCoords.lat.toFixed(6));
@@ -79,6 +102,10 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     }
   }, [pickedCoords]);
 
+  /**
+   * Procesa un archivo de imagen seleccionado (por click o drag&drop).
+   * Crea una URL temporal para la preview y resetea el estado previo.
+   */
   const handleFile = (selectedFile) => {
     setFile(selectedFile);
     setPreview(URL.createObjectURL(selectedFile));
@@ -89,12 +116,21 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     setSuggestions([]);
   };
 
+  /** Gestiona el evento de soltar un archivo arrastrado sobre la zona de drop. */
   const onDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
   };
 
+  /**
+   * Envía la imagen al backend para análisis.
+   * El backend devuelve: final_score, ai_score, color_score, color_detail,
+   * label, image_base64, has_gps, latitude, longitude.
+   *
+   * Si la imagen tiene GPS en el EXIF, auto-rellena las coordenadas
+   * del formulario y actualiza el marcador del mapa directamente.
+   */
   const analyze = async () => {
     if (!file) return;
     setLoading(true);
@@ -106,6 +142,14 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
       const result = await res.json();
       if (!res.ok) throw new Error(result.detail || 'Error del servidor');
       setData(result);
+
+      // ── Auto-rellenar GPS si la imagen lo tiene en el EXIF ──────────────
+      // El backend devuelve has_gps=true cuando encontró coordenadas válidas
+      if (result.has_gps && result.latitude != null && result.longitude != null) {
+        setLatInput(result.latitude.toFixed(6));
+        setLngInput(result.longitude.toFixed(6));
+        setPickedCoords({ lat: result.latitude, lng: result.longitude });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -113,6 +157,12 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     }
   };
 
+  /**
+   * Actualiza las coordenadas cuando el usuario escribe manualmente
+   * en los inputs de latitud/longitud.
+   * Solo llama a setPickedCoords si ambos valores son válidos
+   * para que el marcador del mapa se actualice en tiempo real.
+   */
   const handleManualCoordChange = (type, value) => {
     if (type === 'lat') setLatInput(value);
     if (type === 'lng') setLngInput(value);
@@ -125,6 +175,11 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     }
   };
 
+  /**
+   * Busca lugares usando la API de Nominatim (OpenStreetMap).
+   * Usa debounce de 500ms para no spamear la API con cada tecla.
+   * Muestra un máximo de 4 sugerencias.
+   */
   const searchLocation = (query) => {
     setLocationSearch(query);
     setSuggestions([]);
@@ -147,6 +202,10 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     }, 500);
   };
 
+  /**
+   * Selecciona una sugerencia de Nominatim.
+   * Actualiza coordenadas, título de ubicación y cierra el dropdown.
+   */
   const pickSuggestion = (place) => {
     const lat  = parseFloat(place.lat);
     const lng  = parseFloat(place.lon);
@@ -157,6 +216,12 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     setSuggestions([]);
   };
 
+  /**
+   * Guarda el atardecer analizado en la base de datos via POST /save.
+   * Construye el payload con todos los datos y llama a onSunsetSaved
+   * para que App actualice el estado global y aparezca en el mapa.
+   * Resetea el formulario tras el guardado exitoso.
+   */
   const saveSunset = async () => {
     if (!data || !pickedCoords) return;
     setLoading(true);
@@ -180,7 +245,11 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
       });
       if (!res.ok) throw new Error('Falló el guardado');
       const savedData = await res.json();
+
+      // Notifica a App con el objeto completo para que aparezca en el mapa
       onSunsetSaved({ id: savedData.id, ...payload });
+
+      // Reset completo del formulario
       setData(null); setPreview(null); setFile(null);
       setLocationTitle(''); setLocationSearch('');
       setLatInput(''); setLngInput('');
@@ -192,21 +261,19 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
     }
   };
 
-  // Score ring
+  // ── Score ring (arco SVG animado) ─────────────────────────────────────────
   const score      = data?.final_score ?? 0;
   const radius     = 44;
   const circ       = 2 * Math.PI * radius;
   const dashOffset = circ - (score / 100) * circ;
   const scoreColor = score >= 80 ? '#ff6b2b' : score >= 50 ? '#ffb347' : '#888';
 
-  const labelEmoji = { 'ESPECTACULAR': '🌅', 'MUY BUENO': '😍', 'ACEPTABLE': '🙂', 'ABURRIDO': '😶' };
-
   return (
     <>
       <style>{styles}</style>
       <div className="panel" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* DROP ZONE */}
+        {/* ── DROP ZONE — visible solo si no hay imagen seleccionada ── */}
         {!preview && (
           <div
             style={{
@@ -236,7 +303,7 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
           </div>
         )}
 
-        {/* PREVIEW */}
+        {/* ── PREVIEW — miniatura con gradiente y botón "cambiar" ── */}
         {preview && (
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <img src={preview} alt="preview"
@@ -251,21 +318,24 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
           </div>
         )}
 
-        {/* SCROLL AREA */}
+        {/* ── ÁREA DE SCROLL — resultados, formulario, botón guardar ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 20px' }}>
 
+          {/* Mensaje de error */}
           {error && (
             <div style={{ background: 'rgba(255,61,110,0.08)', border: '1px solid rgba(255,61,110,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '0.82rem', color: '#ff6b8a', marginTop: '12px' }}>
               ❌ {error}
             </div>
           )}
 
+          {/* Botón analizar — solo cuando hay imagen sin analizar */}
           {preview && !data && !loading && (
             <button className="save-btn" style={{ marginTop: '14px' }} onClick={analyze}>
               Analizar atardecer →
             </button>
           )}
 
+          {/* Spinner mientras la IA procesa */}
           {loading && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0', gap: '12px' }}>
               <div style={{ width: '36px', height: '36px', border: '2px solid rgba(255,107,43,0.15)', borderTopColor: '#ff6b2b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -273,10 +343,11 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
             </div>
           )}
 
+          {/* ── Resultados del análisis ── */}
           {data && (
             <div style={{ animation: 'fadeSlideUp 0.4s ease' }}>
 
-              {/* SCORE RING */}
+              {/* Score ring SVG + barras IA/Color */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 0 10px' }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <svg width="100" height="100" style={{ transform: 'rotate(-90deg)' }}>
@@ -295,14 +366,13 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
                 </div>
 
                 <div style={{ flex: 1 }}>
-                  {/*<div style={{ fontSize: '1.4rem', marginBottom: '2px' }}>{labelEmoji[data.label] || '🌅'}</div>*/}
                   <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '0.95rem', color: '#f0ece6', marginBottom: '10px' }}>{data.label}</div>
                   <MiniBar label="IA"    value={data.ai_score}    color="#ff6b2b" />
                   <MiniBar label="Color" value={data.color_score} color="#ffb347" />
                 </div>
               </div>
 
-              {/* COLOR CHIPS */}
+              {/* Color chips — desglose de los 4 criterios del color analyzer */}
               {data.color_detail && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '7px', marginBottom: '16px' }}>
                   <ColorChip label="Saturación" value={data.color_detail.sat_score} />
@@ -314,16 +384,24 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
 
               <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '4px 0 14px' }} />
 
-              {/* UBICACIÓN */}
+              {/* ── Formulario de ubicación ── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
                 <div style={{ fontSize: '0.68rem', color: 'rgba(240,236,230,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   📍 Ubicación
+                  {/* Badge verde si el GPS se detectó automáticamente del EXIF */}
+                  {data.has_gps && (
+                    <span style={{ marginLeft: '8px', color: '#4caf50', fontSize: '0.65rem', fontWeight: 600 }}>
+                      ✓ GPS detectado
+                    </span>
+                  )}
                 </div>
 
+                {/* Título libre */}
                 <input className="panel-input" type="text"
                   placeholder="Título"
                   value={locationTitle} onChange={(e) => setLocationTitle(e.target.value)} />
 
+                {/* Buscador Nominatim con autocomplete y debounce */}
                 <div style={{ position: 'relative', zIndex: 999 }}>
                   <input className="panel-input" type="text" placeholder="Buscar lugar..."
                     value={locationSearch} onChange={(e) => searchLocation(e.target.value)} />
@@ -342,6 +420,7 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
                   )}
                 </div>
 
+                {/* Inputs de coordenadas — se rellenan desde el mapa, el GPS o manualmente */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <input className="panel-input" type="text" placeholder="Latitud"
                     value={latInput} onChange={(e) => handleManualCoordChange('lat', e.target.value)} />
@@ -367,6 +446,10 @@ export default function Sidebar({ pickedCoords, setPickedCoords, onSunsetSaved }
   );
 }
 
+/**
+ * MiniBar — barra de progreso horizontal para scores de IA y Color.
+ * Anima el relleno de izquierda a derecha al montarse.
+ */
 function MiniBar({ label, value, color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
@@ -379,6 +462,10 @@ function MiniBar({ label, value, color }) {
   );
 }
 
+/**
+ * ColorChip — tarjeta que muestra un criterio del análisis de color.
+ * El fondo se hace más intenso cuanto mayor es el valor (feedback visual).
+ */
 function ColorChip({ label, value }) {
   const v     = value ?? 0;
   const alpha = 0.1 + (v / 100) * 0.45;
