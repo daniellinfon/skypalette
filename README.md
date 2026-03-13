@@ -149,9 +149,9 @@ El analizador evalúa exclusivamente la **franja del horizonte** (25%–70% de a
 
 | Criterio | Peso | Descripción |
 |----------|------|-------------|
-| Saturación | 20% | Intensidad del color en píxeles cálidos |
-| Calidez | 35% | Cobertura de tonos naranja/rojo/dorado ponderada por brillo |
-| Diversidad | 20% | Variedad cromática en el horizonte |
+| Saturación | 10% | Intensidad del color en píxeles cálidos |
+| Calidez | 40% | Cobertura de tonos naranja/rojo/dorado ponderada por brillo |
+| Diversidad | 25% | Variedad cromática en el horizonte |
 | Horizonte | 25% | Intensidad visual de la franja clave |
 | Bonus contraste | +10 | Premio por convivencia de cálidos + fríos (naranja + azul) |
 
