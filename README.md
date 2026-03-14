@@ -141,7 +141,9 @@ El modelo está basado en **ResNet18** con Transfer Learning:
 - **Dataset**: imágenes de atardeceres clasificadas manualmente
 - **Entrenamiento**: 20 épocas en GPU T4
 - **Mejor validación**: 94.4% accuracy (época 15)
-- **Score final**: `(Score IA × 0.65) + (Score Color × 0.35)`
+- **Score final**: `(Score IA × 0.55) + (Score Color × 0.45)`
+
+En atardecer.ipynb esta el entrenamiento del modelo
 
 ### Criterios del análisis de color
 
@@ -149,9 +151,9 @@ El analizador evalúa exclusivamente la **franja del horizonte** (25%–70% de a
 
 | Criterio | Peso | Descripción |
 |----------|------|-------------|
-| Saturación | 20% | Intensidad del color en píxeles cálidos |
-| Calidez | 35% | Cobertura de tonos naranja/rojo/dorado ponderada por brillo |
-| Diversidad | 20% | Variedad cromática en el horizonte |
+| Saturación | 10% | Intensidad del color en píxeles cálidos |
+| Calidez | 40% | Cobertura de tonos naranja/rojo/dorado ponderada por brillo |
+| Diversidad | 25% | Variedad cromática en el horizonte |
 | Horizonte | 25% | Intensidad visual de la franja clave |
 | Bonus contraste | +10 | Premio por convivencia de cálidos + fríos (naranja + azul) |
 
@@ -175,8 +177,14 @@ services:
 ---
 
 ## 📱 Capturas de pantalla
-
-![Panel de análisis](screenshots/panel.png)
+ **🗺️ Mapa** 
 ![Mapa con clusters](screenshots/mapa.png)
+
+**🎨 Panel de análisis** 
+![Panel de análisis](screenshots/panel.png)
+
+**🖼️ Colección** 
 ![Colección](screenshots/coleccion.png)
+
+**🏆 Ranking** 
 ![Ranking](screenshots/ranking.png)
