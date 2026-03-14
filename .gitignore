@@ -1,5 +1,6 @@
 # Entornos virtuales y caché de Python
 backend/venv/
+.env
 backend/__pycache__/
 .pytest_cache/
 
